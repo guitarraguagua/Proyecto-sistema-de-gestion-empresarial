@@ -1,13 +1,24 @@
 BACKEND - REQUISITOS FUNCIONALES Y JSON DE PRUEBA
 ==================================================
 
-NOTA:
+NOTA IMPORTANTE:
 - Todos los endpoints van colgados de /api/... (ej: /api/auth/login, /api/usuarios, etc.)
-- Donde dice (TOKEN) significa que debes enviar el JWT en el encabezado Authorization: Bearer <token>.
+- Donde dice (TOKEN) significa que debes enviar el JWT en el encabezado Authorization: Bearer <token>
+- **CONTRASEÑA POR DEFECTO** para todos los usuarios de prueba: **admin123**
 - Los roles usados:
-    1 = ADMINISTRACIÓN
-    2 = VENTAS
-    3 = BODEGA
+    1 = ADMINISTRACIÓN (acceso total)
+    2 = VENTAS (ventas y clientes)
+    3 = BODEGA (inventario y stock)
+
+USUARIOS DE PRUEBA:
+--------------------------------------------------
+| Email                      | Password  | Rol            |
+|----------------------------|-----------|----------------|
+| c.rojas@sistema.cl         | admin123  | ADMINISTRACIÓN |
+| b.morales@sistema.cl       | admin123  | VENTAS         |
+| m.gonzalez@sistema.cl      | admin123  | BODEGA         |
+| l.munoz@sistema.cl         | admin123  | ADMINISTRACIÓN |
+| ariela.perez@sistema.cl    | admin123  | VENTAS         |
 
 --------------------------------------------------
 1) LOGIN (Ingreso al sistema)
@@ -18,24 +29,26 @@ Solo se permite acceso si el estado = 'ACTIVO'.
 ENDPOINT:
   POST /api/auth/login
 
-  DEBE HABERSE INSERTADO ANTES EL ADMINISTRADOR
-
 JSON REQUEST:
 {
   "email": "c.rojas@sistema.cl",
   "password": "admin123"
 }
 
-RESPUESTA (ejemplo):
+RESPUESTA EXITOSA:
 {
   "usuario": {
     "id_usuario": 1,
-    "email": "admin@empresa.com",
+    "email": "c.rojas@sistema.cl",
+    "nombres": "Camila",
+    "apellidos": "Rojas Fuentes",
     "id_rol": 1,
     "estado": "ACTIVO"
-  }
-  "token": "JWT_AQUI",
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
+
+NOTA: Guarda el token, lo necesitarás para todas las siguientes peticiones.
 
 --------------------------------------------------
 2) GESTIÓN DE USUARIOS (Administrador)
@@ -305,8 +318,31 @@ No requiere JSON extra (usa el detalle de la venta).
 --------------------------------------------------
 RF: Admin ve todas las ventas; Vendedor solo las propias.
 
+ROLES PERMITIDOS: [1,2]
+
 ENDPOINT:
-  GET /api/ventas/
+  GET /api/ventas  (TOKEN)
+
+QUERY PARAMS (opcionales):
+  ?fecha_desde=2025-01-01
+  &fecha_hasta=2025-12-31
+  &id_cliente=1
+  &metodo_pago=EFECTIVO
+
+RESPUESTA:
+{
+  "ventas": [
+    {
+      "id_venta": 1,
+      "fecha_venta": "2025-12-01",
+      "cliente": "Rodrigo Paredes Muñoz",
+      "sucursal": "Sucursal Talca Centro",
+      "metodo_pago": "EFECTIVO",
+      "total": 18421.20,
+      "estado": "EMITIDA"
+    }
+  ]
+}
 
 --------------------------------------------------
 17) DASHBOARD DE VENTAS (Administrador)  [RF-17]
@@ -351,4 +387,161 @@ RF: Admin obtiene informe de productos sin movimiento:
 - días sin movimiento > umbral_dias (por defecto 90)
 
 ENDPOINT:
-  GET http://localhost:3000/api/reportes/productos-sin-movimiento?umbral_dias=90
+  GET http://localhost:3000/api/reportes/productos-sin-movimiento?umbral_dias=90  (TOKEN)
+
+--------------------------------------------------
+21) ALERTAS DE STOCK
+--------------------------------------------------
+RF: Consultar y gestionar alertas de stock bajo.
+
+a) Listar alertas pendientes
+  GET /api/alertas-stock  (TOKEN)
+
+b) Marcar alerta como atendida
+  PATCH /api/alertas-stock/1/atender  (TOKEN)
+
+
+==================================================
+TIPS PARA POSTMAN / THUNDER CLIENT
+==================================================
+
+1. CONFIGURAR VARIABLES DE ENTORNO
+--------------------------------------------------
+Crea estas variables para facilitar las pruebas:
+
+- base_url: http://localhost:3000/api
+- token: (se llenará automáticamente después del login)
+
+Uso: {{base_url}}/usuarios en lugar de http://localhost:3000/api/usuarios
+
+
+2. GUARDAR TOKEN AUTOMÁTICAMENTE
+--------------------------------------------------
+En la petición de LOGIN, agrega este script en la pestaña "Tests" o "Post-response":
+
+// Para Postman
+pm.environment.set("token", pm.response.json().token);
+
+// Ahora puedes usar {{token}} en el header Authorization
+
+
+3. HEADERS COMUNES
+--------------------------------------------------
+Para todas las peticiones protegidas, agrega estos headers:
+
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+
+4. COLECCIONES ORGANIZADAS
+--------------------------------------------------
+Organiza tus peticiones en carpetas:
+
+📁 Autenticación
+  - POST Login
+
+📁 Usuarios (Admin)
+  - GET Listar usuarios
+  - POST Crear usuario
+  - PUT Actualizar usuario
+  - PATCH Desactivar usuario
+
+📁 Productos (Admin)
+  - GET Listar productos
+  - POST Crear producto
+  - PUT Actualizar producto
+
+📁 Clientes (Admin/Ventas)
+  - GET Listar clientes
+  - POST Crear cliente
+
+📁 Sucursales (Admin)
+  - GET Listar sucursales
+  - POST Crear sucursal
+
+📁 Inventario (Bodega/Admin)
+  - GET Consultar stock
+  - POST Entrada de stock
+  - POST Registrar merma
+  - PATCH Definir punto crítico
+
+📁 Ventas (Ventas/Admin)
+  - GET Listar ventas
+  - POST Registrar venta
+  - GET Detalle de venta
+
+📁 Dashboard (Admin)
+  - GET Ventas diarias
+  - GET Ventas mensuales
+  - GET Ventas anuales
+
+📁 Reportes (Admin)
+  - GET Reporte consolidado
+  - GET Exportar Excel
+  - GET Exportar PDF
+  - GET Productos sin movimiento
+
+📁 Alertas (Todos)
+  - GET Alertas pendientes
+  - PATCH Atender alerta
+
+
+5. EJEMPLOS RÁPIDOS DE PRUEBA
+--------------------------------------------------
+
+FLUJO COMPLETO DE PRUEBA:
+
+1. Login con usuario admin
+   POST {{base_url}}/auth/login
+
+2. Crear un producto
+   POST {{base_url}}/productos
+
+3. Crear una sucursal (si no existe)
+   POST {{base_url}}/sucursales
+
+4. Registrar entrada de stock
+   POST {{base_url}}/entradas-stock
+
+5. Crear un cliente
+   POST {{base_url}}/clientes
+
+6. Registrar una venta
+   POST {{base_url}}/ventas
+
+7. Ver el dashboard
+   GET {{base_url}}/dashboard-ventas/diarias?anio=2025&mes=12
+
+8. Generar reporte
+   GET {{base_url}}/reportes/ventas-consolidadas?fecha_desde=2025-12-01&fecha_hasta=2025-12-31
+
+9. Exportar a Excel
+   GET {{base_url}}/reportes/ventas-exportar?fecha_desde=2025-12-01&fecha_hasta=2025-12-31&formato=excel
+
+
+==================================================
+SOLUCIÓN DE PROBLEMAS COMUNES
+==================================================
+
+ERROR: "Token no proporcionado" o 401 Unauthorized
+- Verifica que el header Authorization esté presente
+- Formato correcto: Authorization: Bearer TU_TOKEN
+- El token debe ser válido y no haber expirado
+
+ERROR: "Acceso denegado. Rol no autorizado" o 403 Forbidden
+- Verifica que el usuario tenga el rol correcto para ese endpoint
+- Admin [1]: Acceso total
+- Ventas [2]: Ventas, clientes
+- Bodega [3]: Inventario, stock
+
+ERROR: "Stock insuficiente"
+- Verifica que haya stock disponible antes de hacer una venta
+- Registra entrada de stock primero
+
+ERROR: "SKU duplicado"
+- El SKU del producto debe ser único
+- Usa un SKU diferente
+
+ERROR: "No se puede eliminar sucursal con stock"
+- Las sucursales con stock > 0 no se pueden eliminar
+- Primero debes vaciar el stock o transferirlo

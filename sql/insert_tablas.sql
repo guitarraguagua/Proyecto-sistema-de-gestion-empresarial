@@ -110,3 +110,50 @@ VALUES (4, 1, 55, 'L-PINTB-155', DATE '2026-12-31', 4);
 
 INSERT INTO LPMFJCBC_ENTRADAS_STOCK (id_producto, id_sucursal, cantidad, numero_lote, fecha_vencimiento, id_usuario)
 VALUES (5, 1, 120, 'L-BRCH-019', NULL, 5);
+
+-- INSERT VENTAS DE EJEMPLO --
+INSERT INTO LPMFJCBC_VENTAS (id_cliente, id_usuario, id_sucursal_despacho, fecha_venta, metodo_pago, subtotal, iva, total, estado)
+VALUES (1, 2, 1, TO_DATE('2025-12-01', 'YYYY-MM-DD'), 'EFECTIVO', 15480, 2941.20, 18421.20, 'EMITIDA');
+
+INSERT INTO LPMFJCBC_VENTAS (id_cliente, id_usuario, id_sucursal_despacho, fecha_venta, metodo_pago, subtotal, iva, total, estado)
+VALUES (2, 2, 1, TO_DATE('2025-12-03', 'YYYY-MM-DD'), 'TARJETA', 38990, 7408.10, 46398.10, 'EMITIDA');
+
+INSERT INTO LPMFJCBC_VENTAS (id_cliente, id_usuario, id_sucursal_despacho, fecha_venta, metodo_pago, subtotal, iva, total, estado)
+VALUES (3, 5, 1, TO_DATE('2025-12-05', 'YYYY-MM-DD'), 'TRANSFERENCIA', 25960, 4932.40, 30892.40, 'EMITIDA');
+
+-- INSERT DETALLE VENTAS --
+-- Detalle para Venta 1 (Clavos + Brocha)
+INSERT INTO LPMFJCBC_DETALLE_VENTAS (id_venta, id_producto, cantidad, precio_unitario, subtotal)
+VALUES (1, 1, 5, 1990, 9950);
+
+INSERT INTO LPMFJCBC_DETALLE_VENTAS (id_venta, id_producto, cantidad, precio_unitario, subtotal)
+VALUES (1, 5, 2, 2490, 4980);
+
+-- Detalle para Venta 2 (Taladro)
+INSERT INTO LPMFJCBC_DETALLE_VENTAS (id_venta, id_producto, cantidad, precio_unitario, subtotal)
+VALUES (2, 3, 1, 38990, 38990);
+
+-- Detalle para Venta 3 (Pintura + Martillo)
+INSERT INTO LPMFJCBC_DETALLE_VENTAS (id_venta, id_producto, cantidad, precio_unitario, subtotal)
+VALUES (3, 4, 1, 12990, 12990);
+
+INSERT INTO LPMFJCBC_DETALLE_VENTAS (id_venta, id_producto, cantidad, precio_unitario, subtotal)
+VALUES (3, 2, 1, 7490, 7490);
+
+-- INSERT SALIDAS DE STOCK (por las ventas anteriores) --
+INSERT INTO LPMFJCBC_SALIDAS_STOCK (id_producto, id_sucursal, cantidad, motivo, id_venta)
+VALUES (1, 1, 5, 'VENTA', 1);
+
+INSERT INTO LPMFJCBC_SALIDAS_STOCK (id_producto, id_sucursal, cantidad, motivo, id_venta)
+VALUES (5, 1, 2, 'VENTA', 1);
+
+INSERT INTO LPMFJCBC_SALIDAS_STOCK (id_producto, id_sucursal, cantidad, motivo, id_venta)
+VALUES (3, 1, 1, 'VENTA', 2);
+
+INSERT INTO LPMFJCBC_SALIDAS_STOCK (id_producto, id_sucursal, cantidad, motivo, id_venta)
+VALUES (4, 1, 1, 'VENTA', 3);
+
+INSERT INTO LPMFJCBC_SALIDAS_STOCK (id_producto, id_sucursal, cantidad, motivo, id_venta)
+VALUES (2, 1, 1, 'VENTA', 3);
+
+COMMIT;
